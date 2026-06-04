@@ -3,7 +3,7 @@ import { Order } from '../types';
 export const getWhatsAppMessage = (order: Order): string => {
   const sinhala = `🍫 *MRM Shopping - ඔබේ ඇණවුම තහවුරු කරන ලදී!*\n\nනම: ${order.userName}\nඇණවුම් අංකය: #${order.trackingNumber}\nමුළු මිල: Rs. ${order.total.toLocaleString()}\nදිවිරුම් ගාස්තු: Rs. ${order.deliveryCharge}\n\nඅපි ඉක්මනින් ඔබේ ඇණවුම ලබා දෙන්නෙමු! ස්තූතියි! 🙏`;
 
-  let english = `\n\n🍫 *MRM Shopping - Order Confirmed!*\n\nHello ${order.userName}!\nOrder ID: #${order.trackingNumber}\nItems: ${order.items.map(i => `${i.productName} x${i.quantity}`).join(', ')}\nSubtotal: Rs. ${order.subtotal.toLocaleString()}\nDelivery: Rs. ${order.deliveryCharge}\nTotal: Rs. ${order.total.toLocaleString()}\n\nTrack your order at: ${window.location.origin}/tracking\nEnter tracking number: ${order.trackingNumber}`;
+  let english = `\n\n🍫 *MRM Shopping - Order Confirmed!*\n\nHello ${order.userName}!\nOrder ID: #${order.trackingNumber}\nItems: ${order.items.map(i => `${i.productName} x${i.quantity}`).join(', ')}\nSubtotal: Rs. ${order.subtotal.toLocaleString()}\nDelivery: Rs. ${order.deliveryCharge}\nTotal: Rs. ${order.total.toLocaleString()}\n\nTrack your order at: ${window.location.origin}/#/tracking\nEnter tracking number: ${order.trackingNumber}`;
 
   if (order.paymentMethod === 'bank') {
     english += `\n\n*Bank Details for Transfer:*\nBank: Commercial bank\nBranch: Vavuniya\nName: RR Hasan\nAccount Number: 8015204918\n\nPlease transfer the total of Rs. ${order.total.toLocaleString()} and send a photo/screenshot of the receipt here to confirm your order.`;
@@ -30,5 +30,5 @@ export const getStatusUpdateMessage = (order: Order): string => {
     cancelled: 'ඔබේ ඇණවුම අවලංගු කරන ලදී / Your order has been cancelled',
   };
 
-  return `🍫 *MRM Shopping - Order Update*\n\nOrder #${order.trackingNumber}\n${statusMessages[order.status] || order.status}\n\nTrack at: ${window.location.origin}/tracking`;
+  return `🍫 *MRM Shopping - Order Update*\n\nOrder #${order.trackingNumber}\n${statusMessages[order.status] || order.status}\n\nTrack at: ${window.location.origin}/#/tracking`;
 };
