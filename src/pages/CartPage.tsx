@@ -72,9 +72,6 @@ const CartPage: React.FC = () => {
       const adminPhone = '94707070872';
       const waUrl = openWhatsAppPopup(adminPhone, msg);
       
-      // Auto open WhatsApp popup immediately
-      window.open(waUrl, '_blank');
-      
       setWhatsappPopup({ url: waUrl, message: msg, trackingNumber, paymentMethod, total });
 
       // Send email notifications

@@ -39,6 +39,7 @@ const AdminPage: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, revenue: 0, customers: 0, products: 0 });
+  const [hasNewOrders, setHasNewOrders] = useState(false);
 
   useEffect(() => {
     if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
@@ -48,8 +49,27 @@ const AdminPage: React.FC = () => {
     fetchAll();
   }, [currentUser]);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      setHasNewOrders(false);
+      localStorage.setItem('mrm_admin_last_viewed_orders', new Date().toISOString());
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!currentUser || currentUser.email !== ADMIN_EMAIL) return;
+    
+    // Poll for new orders quietly every 30 seconds
+    const interval = setInterval(() => {
+      fetchAll(true);
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [currentUser, activeTab]);
+
+  const fetchAll = async (quiet: boolean | any = false) => {
+    const isQuiet = quiet === true;
+    if (!isQuiet) setLoading(true);
     try {
       const [prodSnap, orderSnap, userSnap, settingsSnap] = await Promise.all([
         getDocs(query(collection(db, 'products'), orderBy('createdAt', 'desc'))),
@@ -70,10 +90,26 @@ const AdminPage: React.FC = () => {
         customers: u.filter(u => u.role !== 'admin').length,
         products: p.length,
       });
+
+      // Determine if there are new orders since last viewed
+      const lastViewedStr = localStorage.getItem('mrm_admin_last_viewed_orders');
+      const lastViewed = lastViewedStr ? new Date(lastViewedStr).getTime() : 0;
+      
+      const hasNew = o.some(ord => {
+        const orderTime = ord.createdAt?.toDate?.()?.getTime() || (ord.createdAt?.seconds ? ord.createdAt.seconds * 1000 : 0) || Date.now();
+        return orderTime > lastViewed;
+      });
+
+      if (activeTab === 'orders') {
+        setHasNewOrders(false);
+        localStorage.setItem('mrm_admin_last_viewed_orders', new Date().toISOString());
+      } else {
+        setHasNewOrders(hasNew);
+      }
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (!isQuiet) setLoading(false);
     }
   };
 
@@ -105,9 +141,15 @@ const AdminPage: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-amber-500 text-white' : 'bg-[#1a0800] text-amber-300 hover:bg-amber-900/30 border border-amber-900/30'}`}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-amber-500 text-white' : 'bg-[#1a0800] text-amber-300 hover:bg-amber-900/30 border border-amber-900/30'}`}
             >
               {tab.icon} {tab.label}
+              {tab.id === 'orders' && hasNewOrders && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+              )}
             </button>
           ))}
         </div>
